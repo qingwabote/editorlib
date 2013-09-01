@@ -1,6 +1,16 @@
 package editorlib.components.tiledMapClasses
 {	
+	import flash.display.Bitmap;
+	import flash.display.BitmapData;
+	import flash.display.Loader;
+	import flash.display.LoaderInfo;
+	import flash.events.Event;
+	import flash.utils.ByteArray;
+	
 	import mx.collections.ArrayList;
+	import mx.events.PropertyChangeEvent;
+
+	[Event(name="complete", type="flash.events.Event")]
 
 	public class TileSet extends ArrayList
 	{
@@ -59,7 +69,7 @@ package editorlib.components.tiledMapClasses
 			_imageSource = value;
 		}
 
-		/*private var _sourceWidth:Number;
+		private var _sourceWidth:Number;
 
 		public function get sourceWidth():Number
 		{
@@ -72,42 +82,60 @@ package editorlib.components.tiledMapClasses
 		{
 			return _sourceHeight;
 		}
+		
+		private var _row:int;
 
-		private var _imageData:ByteArray;
-
-		public function get imageData():ByteArray
+		public function get row():int
 		{
-			return _imageData;
+			return _row;
+		}
+		
+		private var _column:int;
+
+		public function get column():int
+		{
+			return _column;
+		}
+		
+		private var _bitmapData:BitmapData;
+		[Bindable("propertyChange")]
+		public function get bitmapData():BitmapData
+		{
+			return _bitmapData;
 		}
 
-		private var resourceProvider:IResourceProvider;*/
+		private var tiledMapData:TiledMapData;
 		
-		public function TileSet(firstGID:int = 0, name:String = null)
+		private var xml:XML;
+		
+		public function TileSet(tiledMapData:TiledMapData)
 		{
 			super();
-		    _firstGID = firstGID;
-			_name = name;
+			
+			this.tiledMapData = tiledMapData;
 		}
 		
-		public function readXML(tilesetXML:XML):void
+		public function load():void
+		{
+			var loader:Loader = new Loader;
+			loader.contentLoaderInfo.addEventListener(Event.COMPLETE,completeHandler);
+			loader.loadBytes(tiledMapData.resourceProvider.getResource(_imageSource) as ByteArray);
+		}
+		
+		internal function setFirstGID(GID:int):void
+		{
+			_firstGID = GID;
+		}
+				
+		public function readXML(xml:XML):void
 		{			
-			_firstGID = tilesetXML.@firstgid;
-			_name = tilesetXML.@name;
-			_tileWidth = tilesetXML.@tilewidth;
-			_tileHeight = tilesetXML.@tileheight;
-			_imageSource = tilesetXML.image.@source;
+			this.xml =xml;
 			
-			var sourceInput:Array = [];
-
-			var tileList:XMLList = tilesetXML.tile;
-			for each(var tileXML:XML in tileList)
-			{
-				var tile:Tile = new Tile;
-				tile.readXML(tileXML);
-				sourceInput.push(tile);
-			}
-			
-			this.source = sourceInput;
+			setFirstGID(xml.@firstgid);
+			name = xml.@name;
+			tileWidth = xml.@tilewidth;
+			tileHeight = xml.@tileheight;
+			imageSource = xml.image.@source;
 		}
 		
 		public function writeXML():XML
@@ -115,9 +143,39 @@ package editorlib.components.tiledMapClasses
 			return null;
 		}
 		
-		/*internal function initialize(resourceProvider:IResourceProvider):void
+		private function readTiles(xmlList:XMLList):void
 		{
-			this.resourceProvider = resourceProvider;
-		}*/
+			var sourceInput:Array = [];
+			
+			for each(var tileXML:XML in xmlList)
+			{
+				var tile:Tile = new Tile(this);
+				tile.readXML(tileXML);
+				sourceInput.push(tile);
+			}
+			
+			this.source = sourceInput;
+		}
+		
+		private function completeHandler(event:Event):void
+		{
+			var info:LoaderInfo = event.target as LoaderInfo;
+			info.removeEventListener(Event.COMPLETE,completeHandler);
+
+			_bitmapData = Bitmap(info.content).bitmapData;
+			
+			_sourceWidth = _bitmapData.width;
+			_sourceHeight = _bitmapData.height;
+			
+			_row = Math.round(_sourceWidth / _tileWidth);
+			_column = Math.round(_sourceHeight / _tileHeight);
+			
+			readTiles(xml.tile)
+			
+			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"bitmapData",null,_bitmapData));
+
+			dispatchEvent(event);
+		}
+		
 	}
 }

@@ -4,7 +4,7 @@ package editorlib.containers
 	import spark.components.Group;
 	import spark.components.SkinnableContainer;
 	
-	import editorlib.skins.containers.CtrlPanelSkin;
+	import editorlib.containers.ctrlPanelClasses.CtrlPanelSkin;
 	
 	public class CtrlPanel extends SkinnableContainer
 	{

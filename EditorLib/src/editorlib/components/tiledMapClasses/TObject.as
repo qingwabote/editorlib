@@ -1,5 +1,7 @@
 package editorlib.components.tiledMapClasses
 {
+	import mx.collections.IList;
+
 	public class TObject
 	{
 		private var _GID:int;
@@ -33,8 +35,23 @@ package editorlib.components.tiledMapClasses
 			_y = value;
 		}
 		
-		public function TObject()
+		private var tiledMapData:TiledMapData;
+
+		private var _tile:Tile;
+		[Bindable]
+		public function get tile():Tile
 		{
+			return _tile;
+		}
+
+		public function set tile(value:Tile):void
+		{
+			_tile = value;
+		}
+
+		public function TObject(tiledMapData:TiledMapData)
+		{
+			this.tiledMapData = tiledMapData;
 		}
 		
 		public function readXML(xml:XML):void
@@ -42,6 +59,19 @@ package editorlib.components.tiledMapClasses
 			_GID = xml.@gid;
 			x = xml.@x;
 			y = xml.@y;
+			
+			var target:Tile;
+			var tileSetList:IList = tiledMapData.tileSetList;
+			for(var i:int = 0; i < tileSetList.length; i++)
+			{
+				var tileSet:TileSet = tileSetList.getItemAt(i) as TileSet;
+				if(tileSet.firstGID + tileSet.length >= _GID)
+				{
+					target = tileSet.getItemAt(_GID - tileSet.firstGID) as Tile;
+					break;
+				}
+			}
+			tile = target;
 		}
 		
 		public function writeXML():XML

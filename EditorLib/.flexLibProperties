@@ -2,7 +2,8 @@
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="editorlib.containers.CtrlPanel"/>
-    <classEntry path="editorlib.skins.containers.CtrlPanelSkin"/>
+    <classEntry path="editorlib.containers.ctrlPanelClasses.CtrlPanelSkin"/>
+    <classEntry path="editorlib.components.tiledMapClasses.TileSetList"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

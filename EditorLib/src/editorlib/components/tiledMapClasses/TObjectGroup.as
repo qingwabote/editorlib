@@ -6,9 +6,13 @@ package editorlib.components.tiledMapClasses
 	{
 		public var name:String;
 		
-		public function TObjectGroup(source:Array=null)
+		private var tiledMapData:TiledMapData;
+
+		public function TObjectGroup(tiledMapData:TiledMapData)
 		{
-			super(source);
+			super();
+			
+			this.tiledMapData = tiledMapData;
 		}
 		
 		public function readXML(xml:XML):void
@@ -19,7 +23,7 @@ package editorlib.components.tiledMapClasses
 			var objectList:XMLList = xml.object;
 			for each(var objectXML:XML in objectList)
 			{
-				var object:TObject = new TObject;
+				var object:TObject = new TObject(tiledMapData);
 				object.readXML(objectXML);
 				source.push(object);
 			}

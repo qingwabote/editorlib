@@ -1,5 +1,10 @@
 package editorlib.components.tiledMapClasses
 {
+	import flash.display.BitmapData;
+	import flash.geom.Point;
+	import flash.geom.Rectangle;
+	
+	import mx.events.PropertyChangeEvent;
 	import mx.utils.ObjectProxy;
 
 	/**The class Tile comes from tmx tag "tile".I made it a dynamic class to keep properties corresponded to tag "properties".*/
@@ -12,9 +17,25 @@ package editorlib.components.tiledMapClasses
 			return _ID;
 		}
 
-		public function Tile(ID:int = 0)
+		private var _globalID:int;
+
+		public function get globalID():int
 		{
-			_ID = ID;
+			return _globalID;
+		}
+		
+		private var _bitmapData:BitmapData;
+		[Bindable("propertyChange")]
+		public function get bitmapData():BitmapData
+		{
+			return _bitmapData;
+		}
+		
+		private var tileSet:TileSet;
+		
+		public function Tile(tileSet:TileSet)
+		{
+			this.tileSet = tileSet;
 		}
 		
 		public function readXML(xml:XML):void
@@ -33,6 +54,20 @@ package editorlib.components.tiledMapClasses
 				var value:String = property.@value;
 				this[name] = value;
 			}
+			
+			_globalID = tileSet.firstGID + _ID;
+			
+			var rowIndex:int = _ID < tileSet.column ? 0 : Math.floor(_ID / tileSet.column);
+			var colIndex:int = _ID < tileSet.column ? _ID : ID % tileSet.column;
+		
+			var dest:Point = new Point(colIndex * tileSet.tileWidth, rowIndex * tileSet.tileHeight);
+			var rect:Rectangle = new Rectangle(0, 0, tileSet.tileWidth, tileSet.tileHeight);
+			var bitmapData:BitmapData = new BitmapData(rect.width, rect.height);
+			bitmapData.copyPixels(tileSet.bitmapData, rect, dest);
+			
+			_bitmapData = bitmapData;
+			
+			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"bitmapData",null,_bitmapData));
 		}
 		
 		public function writeXML():XML
