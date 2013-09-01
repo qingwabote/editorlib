@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<containers:CtrlPanel xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				  xmlns:s="library://ns.adobe.com/flex/spark" 
+				  xmlns:mx="library://ns.adobe.com/flex/mx" 
+				  xmlns:containers="editorlib.containers.*">
+	<containers:states>
+		<s:State name="empty"/>
+		<s:State name="editing"/>
+	</containers:states>
+	<fx:Script>
+		<![CDATA[
+			import mx.events.PropertyChangeEvent;
+			
+			[Bindable]
+			public var frameSource:Object;
+			
+			[Bindable]
+			public var backgroundSource:Object;
+			
+			[Bindable]
+			public var imageSource:Object;
+			
+			private var _frameWidth:Number = 0;
+			[Bindable("propertyChange")]
+			public function get frameWidth():Number
+			{
+				return _frameWidth;
+			}
+			
+			private var _frameHeight:Number = 0;
+			[Bindable("propertyChange")]
+			public function get frameHeight():Number
+			{
+				return _frameHeight;
+			}
+			
+			[Bindable]
+			public var offsetX:Number = 0;
+			
+			private var _offsetY:Number = 0;
+			
+			/**A cartesian coordinate Y.
+			 * It is the opposite of flash native Y.*/
+			[Bindable]
+			public function get offsetY():Number
+			{
+				return _offsetY;
+			}
+			
+			public function set offsetY(value:Number):void
+			{
+				_offsetY = value;
+				var oldValue:Number = _nativeOffsetY;
+				_nativeOffsetY = -_offsetY;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "nativeOffsetY", oldValue, _nativeOffsetY));
+			}
+			
+			private var _nativeOffsetY:Number =0;
+			
+			/**A flash native Y.
+			 * It is the opposite of cartesian Y.*/
+			[Bindable]
+			public function get nativeOffsetY():Number
+			{
+				return _nativeOffsetY;
+			}
+			
+			public function set nativeOffsetY(value:Number):void
+			{
+				_nativeOffsetY = value;
+				var oldValue:Number = _offsetY;
+				_offsetY = -nativeOffsetY;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "offsetY", oldValue, _offsetY));
+			}
+			
+			[Bindable]
+			public var locked:Boolean = false;
+			
+			private var diffX:Number = 0;
+			
+			private var diffY:Number = 0;
+			
+			protected function readyHandler(event:Event):void
+			{
+				var oldWidth:Number = _frameWidth;
+				_frameWidth = frameImage.bitmapData.width;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"frameWidth",oldWidth,_frameWidth));
+				
+				var oldHeight:Number = _frameHeight;
+				_frameHeight = frameImage.bitmapData.height;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"frameHeight",oldHeight,_frameHeight));
+				
+				currentState = "editing";
+			}
+			
+			protected function mouseDownHandler(event:MouseEvent):void
+			{
+				diffX = event.localX - offsetX;
+				diffY = event.localY - nativeOffsetY;
+				content.addEventListener(MouseEvent.MOUSE_MOVE,mouseMoveHandler);
+			}
+			
+			protected function mouseUpHandler(event:MouseEvent):void
+			{
+				content.removeEventListener(MouseEvent.MOUSE_MOVE,mouseMoveHandler);
+			}
+			
+			protected function mouseMoveHandler(event:MouseEvent):void
+			{
+				offsetX = event.localX-diffX;
+				nativeOffsetY = event.localY-diffY;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<containers:topControlBar>
+		<s:Group>
+			<s:layout>
+				<s:HorizontalLayout paddingLeft="16" paddingRight="16" gap="16" verticalAlign="middle"/>
+			</s:layout>
+			<s:Label text="{'frame size: '+frameWidth+' × '+frameHeight}"/>
+			<s:HSlider id="slider" minimum="0.01" maximum="4" stepSize="0.01" snapInterval="0.01" width="256" value="1"/>
+		</s:Group>
+	</containers:topControlBar>
+	<containers:bottomControlBar>
+		<s:Group>
+			<s:layout>
+				<s:HorizontalLayout paddingLeft="16" paddingRight="16" gap="16" verticalAlign="middle"/>
+			</s:layout>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="offset X:"/>
+				<s:NumericStepper value="@{offsetX}" width="60" color="0x000000" minimum="-300" maximum="300"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="offset Y:"/>
+				<s:NumericStepper value="@{offsetY}" width="60" color="0x000000" minimum="-300" maximum="300"/>
+			</s:HGroup>
+		</s:Group>
+	</containers:bottomControlBar>
+	<s:Group id="content" minWidth="400" minHeight="300" width="{frameWidth}" height="{frameHeight}" scaleX="{slider.value}" scaleY="{slider.value}"
+			 mouseDown.editing="{locked ? null : mouseDownHandler(event)}" 
+			 mouseUp.editing="{locked ? null : mouseUpHandler(event)}">
+		<s:mask>
+			<s:Group width="{frameWidth}" height="{frameHeight}">
+				<s:Rect width="100%" height="100%">
+					<s:fill>
+						<s:SolidColor/>
+					</s:fill>
+				</s:Rect>
+			</s:Group>
+		</s:mask>
+		<s:BitmapImage source="{backgroundSource}"/>
+		<s:BitmapImage source="{imageSource}" horizontalCenter="{offsetX}" verticalCenter="{nativeOffsetY}"/>
+		<s:BitmapImage id="frameImage" source="{frameSource}" ready="readyHandler(event)"/>
+	</s:Group>
+</containers:CtrlPanel>

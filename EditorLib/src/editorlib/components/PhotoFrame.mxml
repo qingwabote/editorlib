@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SkinnableContainer mouseDown="mouseDownHandler(event)" 
+					  mouseUp="mouseUpHandler(event)" 
+					  skinClass="editorlib.skins.components.PhotoFrameSkin" 
+					  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					  xmlns:s="library://ns.adobe.com/flex/spark" 
+					  xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.PropertyChangeEvent;
+									
+			/**The variable is assign to source of BitmapImage, so you can put anything BitmapImage supported into it.*/
+			[Bindable]
+			public var frameSource:Object;
+			
+			/**The variable is assign to source of BitmapImage, so you can put anything BitmapImage supported into it.*/
+			[Bindable]
+			public var backgroundSource:Object;
+			
+			[Bindable]
+			public var offsetX:Number = 0;
+			
+			private var _offsetY:Number = 0;
+			
+			/**A cartesian coordinate Y.
+			 * It is the opposite of flash native Y.*/
+			[Bindable]
+			public function get offsetY():Number
+			{
+				return _offsetY;
+			}
+			
+			public function set offsetY(value:Number):void
+			{
+				_offsetY = value;
+				var oldValue:Number = _nativeOffsetY;
+				_nativeOffsetY = -_offsetY;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "nativeOffsetY", oldValue, _nativeOffsetY));
+			}
+			
+			private var _nativeOffsetY:Number =0;
+			
+			/**A flash native Y.
+			 * It is the opposite of cartesian Y.*/
+			[Bindable]
+			public function get nativeOffsetY():Number
+			{
+				return _nativeOffsetY;
+			}
+			
+			public function set nativeOffsetY(value:Number):void
+			{
+				_nativeOffsetY = value;
+				var oldValue:Number = _offsetY;
+				_offsetY = -nativeOffsetY;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this, "offsetY", oldValue, _offsetY));
+			}
+			
+			[Bindable]
+			public var locked:Boolean = false;
+			
+			private var diffX:Number = 0;
+			
+			private var diffY:Number = 0;
+			
+			protected function mouseDownHandler(event:MouseEvent):void
+			{
+				if(locked)
+					return;
+				/*diffX = event.localX - offsetX;
+				diffY = event.localY - nativeOffsetY;*/
+				diffX = event.stageX - offsetX;
+				diffY = event.stageY - nativeOffsetY;
+				addEventListener(MouseEvent.MOUSE_MOVE,mouseMoveHandler);
+			}
+			
+			protected function mouseUpHandler(event:MouseEvent):void
+			{
+				removeEventListener(MouseEvent.MOUSE_MOVE,mouseMoveHandler);
+			}
+			
+			protected function mouseMoveHandler(event:MouseEvent):void
+			{
+				/*offsetX = event.localX-diffX;
+				nativeOffsetY = event.localY-diffY;*/
+				offsetX = event.stageX-diffX;
+				nativeOffsetY = event.stageY-diffY;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+</s:SkinnableContainer>

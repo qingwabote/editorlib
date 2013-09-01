@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<containers:CtrlPanel  backgroundColor="{colorPicker.selectedColor}" 
+				   nativeDragEnter="nativeDragEnterHandler(event)"
+				   nativeDragDrop="nativeDragDropHandler(event)"
+				   xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				   xmlns:s="library://ns.adobe.com/flex/spark" 
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:components="editorlib.components.*" 
+				   xmlns:containers="editorlib.containers.*">
+	
+	<containers:states>
+		<s:State name="empty"/>
+		<s:State name="editing"/>
+	</containers:states>
+	<fx:Script>
+		<![CDATA[			
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.events.FlexNativeMenuEvent;
+			import mx.events.PropertyChangeEvent;
+			import mx.graphics.codec.PNGEncoder;
+			import mx.utils.UIDUtil;
+			
+			import editorlib.graphics.RatioRect;
+			
+			private var ready:Boolean = false;
+			
+			private var _source:Object;			
+			[Bindable]
+			public function get source():Object
+			{
+				return _source;
+			}
+			public function set source(value:Object):void
+			{
+				_source = value;
+				if(_source == null)
+					currentState = "empty";
+				ready = false;
+			}
+			
+			[Bindable]
+			public var clipRect:RatioRect=new RatioRect();
+			
+			private var _locked:Boolean = false;
+			
+			[Bindable]
+			public function get locked():Boolean
+			{
+				return _locked;
+			}
+			
+			public function set locked(value:Boolean):void
+			{
+				_locked = value;
+			}
+			
+			protected function nativeDragEnterHandler(event:NativeDragEvent):void
+			{
+				if(locked)
+					return;
+				if(event.clipboard.hasFormat(ClipboardFormats.FILE_LIST_FORMAT))
+				{
+					NativeDragManager.acceptDragDrop(this);
+				}
+			}
+			
+			protected function nativeDragDropHandler(event:NativeDragEvent):void
+			{
+				var file:File=event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT)[0] as File;
+				if(file.extension=="png"||file.extension=="bmp"||file.extension=="jpg")
+				{
+					var byteArray:ByteArray=new ByteArray;
+					var stream:FileStream=new FileStream;
+					stream.open(file,FileMode.READ);
+					stream.readBytes(byteArray);
+					stream.close();
+					
+					this.source=byteArray;
+				}
+				else
+				{
+					Alert.show("Unsupported file extension ："+file.extension);
+				}
+				
+			}
+			
+			/**Maximum is changed by two value the width/height of image and rect.
+			 * Loading of image is asynchronous,so we must protect the value of NumberStepper from wrong maximum when image has not been loaded yet.*/
+			private function srcNotLoadedHandler(value:int):int
+			{
+				if(ready)
+					return value;
+				else
+					return int.MAX_VALUE;
+			}
+			
+			private function nativeMenuSelectHandler(event:FlexNativeMenuEvent):void
+			{				
+				switch(event.label)
+				{
+					case "Save As":
+						var file:File = File.desktopDirectory.resolvePath(UIDUtil.createUID() + ".png");
+						file.browseForSave("Save As");
+						file.addEventListener(Event.SELECT,function(event:Event):void
+						{
+							var rectangle:Rectangle = new Rectangle(clipRect.x, clipRect.y, clipRect.width ,clipRect.height);
+							//var output:ByteArray = new ByteArray;
+							//image.bitmapData.encode(rectangle, new PNGEncoderOptions, output);
+							var bitmapData:BitmapData = new BitmapData(rectangle.width,rectangle.height);
+							bitmapData.copyPixels(clipper.bitmapData,rectangle,new Point);
+							var encoder:PNGEncoder = new PNGEncoder;
+							var output:ByteArray = encoder.encode(bitmapData);
+							file = event.target as File;
+							var stream:FileStream = new FileStream;
+							stream.open(file, FileMode.WRITE);
+							stream.writeBytes(output);
+							stream.close();
+						});
+						break;
+				}
+			}
+			
+			protected function clipper_readyHandler(event:FlexEvent):void
+			{
+				ready = true;
+				currentState = "editing";
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+		<fx:Model id="nativeMenu">
+			<menuitem>
+				<label>Save As</label>
+				<enabled>{currentState != 'empty'}</enabled>
+			</menuitem>
+		</fx:Model>
+	</fx:Declarations>
+	<containers:flexContextMenu>
+		<mx:FlexNativeMenu dataProvider="{nativeMenu}" labelField="label" showRoot="false" itemClick="nativeMenuSelectHandler(event)"/>
+	</containers:flexContextMenu>
+	<containers:topControlBar>
+		<s:Group enabled.empty="false">
+			<s:layout>
+				<s:HorizontalLayout paddingLeft="16" paddingRight="16" gap="16" verticalAlign="middle"/>
+			</s:layout>
+			
+			<s:Label text="{clipper.sourceWidth+' × '+clipper.sourceHeight+' pixels'}"/>
+			
+			<s:Label text="{(source.length/1024).toFixed(2)+' KB'}"/>
+			
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="background:"/>
+				<mx:ColorPicker id="colorPicker" height="16" minHeight="16" focusEnabled="false"/>
+			</s:HGroup>
+			
+			<s:HSlider id="slider" minimum="0.01" maximum="4" stepSize="0.01" snapInterval="0.01" width="256" value="1"/>
+			
+			<s:CheckBox id="checkBox" label="clip border"/>
+		</s:Group>
+	</containers:topControlBar>
+	<containers:bottomControlBar>
+		<s:Group enabled.empty="false" enabled.editing="{locked ? false : true}">
+			<s:layout>
+				<s:HorizontalLayout paddingLeft="16" paddingRight="16" gap="16" verticalAlign="middle"/>
+			</s:layout>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="X:"/>		
+				<s:NumericStepper id="XStepper" width="60" color="0x000000" value="@{clipRect.x}" minimum="0" maximum="{srcNotLoadedHandler(clipper.sourceWidth-clipRect.width)}"/>
+			</s:HGroup>
+			
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="Y:"/>		
+				<s:NumericStepper id="YStepper" width="60" color="0x000000" value="@{clipRect.y}" minimum="0" maximum="{srcNotLoadedHandler(clipper.sourceHeight-clipRect.height)}"/>
+			</s:HGroup>
+			
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="{'multiple ( '+clipRect.aspectRatio+' ) :'}"/>		
+				<s:NumericStepper id="multipleStepper" width="60" color="0x000000" value="@{clipRect.multiple}" 
+								  minimum="1" maximum="{srcNotLoadedHandler(Math.min(Math.floor((clipper.sourceWidth-clipRect.x)/clipRect.widthRatio),Math.floor((clipper.sourceHeight-clipRect.y)/clipRect.heightRatio)))}"/>
+				<s:Label text="{clipRect.width+' × '+clipRect.height}" width="100"/>
+			</s:HGroup>
+			
+		</s:Group>
+	</containers:bottomControlBar>
+	<s:Scroller width="100%" height="100%" minHeight="300">
+		<s:Group scaleX="{slider.value}" scaleY="{slider.value}">
+			<components:ImageClip id="clipper" source="{source}" clipRect="{clipRect}" showClipBorder="{checkBox.selected}" ready="clipper_readyHandler(event)"/>
+			<s:Label horizontalCenter="0" verticalCenter="0" text="Drop image file here" color="0xFFFFFF" fontSize="20" fontWeight="bold" visible="false" visible.empty="{locked ? false : true}"/>
+		</s:Group>
+	</s:Scroller>
+</containers:CtrlPanel>

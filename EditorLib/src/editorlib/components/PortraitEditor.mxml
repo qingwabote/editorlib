@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<containers:CtrlPanel  nativeDragEnter="nativeDragEnterHandler(event)"
+				   nativeDragDrop="nativeDragDropHandler(event)"
+				   xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				   xmlns:s="library://ns.adobe.com/flex/spark" 
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   xmlns:components="editorlib.components.*" 
+				   xmlns:containers="editorlib.containers.*">
+	<fx:Metadata>
+		[Event(name="ready", type="mx.events.FlexEvent")]
+	</fx:Metadata>
+	<containers:states>
+		<s:State name="empty"/>
+		<s:State name="editing"/>
+	</containers:states>
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.events.PropertyChangeEvent;
+			import mx.events.ResizeEvent;
+						
+			import editorlib.graphics.RatioRect;
+			
+			private var ready:Boolean = false;
+
+			private var _source:Object;
+
+			/**The variable is assign to source of BitmapImage, so you can put anything BitmapImage supported into it.*/
+			[Bindable]
+			public function get source():Object
+			{
+				return _source;
+			}
+
+			public function set source(value:Object):void
+			{
+				_source = value;
+				if(_source == null)
+					currentState = "empty";
+				else if(_source is ByteArray && ByteArray(_source).length == 0)
+					currentState = "empty";
+					
+				ready = false;
+			}
+			
+			/**The variable is assign to source of BitmapImage, so you can put anything BitmapImage supported into it.*/
+			[Bindable]
+			public var frameSource:Object;
+			
+			/**The variable is assign to source of BitmapImage, so you can put anything BitmapImage supported into it.*/
+			[Bindable]
+			public var backgroundSource:Object;
+			
+			private var _sourceWidth:Number = 0;
+			[Bindable("propertyChange")]
+			public function get sourceWidth():Number
+			{
+				return _sourceWidth;
+			}
+			
+			private var _sourceHeight:Number = 0;
+			[Bindable("propertyChange")]
+			public function get sourceHeight():Number
+			{
+				return _sourceHeight;
+			}
+
+			private var _frameWidth:Number = 0;
+			[Bindable("propertyChange")]
+			public function get frameWidth():Number
+			{
+				return _frameWidth;
+			}
+			
+			private var _frameHeight:Number = 0;
+			[Bindable("propertyChange")]
+			public function get frameHeight():Number
+			{
+				return _frameHeight;
+			}
+			
+			[Bindable]
+			public var offsetX:Number = 0;
+			
+			/**A cartesian coordinate Y.
+			 * It is the opposite of flash native Y.*/
+			[Bindable]
+			public var offsetY:Number = 0;
+			
+			[Bindable]
+			public var clipRect:RatioRect = new RatioRect;
+						
+			[Bindable]
+			public var locked:Boolean = false;
+			
+			protected function imageclippercore_readyHandler(event:FlexEvent):void
+			{
+				ready = true;
+
+				var oldWidth:Number = _sourceWidth;
+				_sourceWidth = clipper.sourceWidth;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"sourceWidth",oldWidth,_sourceWidth));
+				
+				var oldHeight:Number = _sourceHeight;
+				_sourceHeight = clipper.sourceHeight;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"sourceHeight",oldHeight,_sourceHeight));	
+				
+				currentState = "editing";
+				dispatchEvent(event);
+			}
+			
+			protected function photoframe_resizeHandler(event:ResizeEvent):void
+			{
+				var oldWidth:Number = _frameWidth;
+				_frameWidth = photeFrame.width
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"frameWidth",oldWidth,_frameWidth));
+				
+				var oldHeight:Number = _frameHeight;
+				_frameHeight = photeFrame.height
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"frameHeight",oldHeight,_frameHeight));
+			}
+			
+			protected function nativeDragEnterHandler(event:NativeDragEvent):void
+			{
+				if(locked)
+					return;
+				if(event.clipboard.hasFormat(ClipboardFormats.FILE_LIST_FORMAT))
+				{
+					NativeDragManager.acceptDragDrop(this);
+				}
+			}
+			
+			protected function nativeDragDropHandler(event:NativeDragEvent):void
+			{
+				var file:File=event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT)[0] as File;
+				if(file.extension=="png"||file.extension=="bmp"||file.extension=="jpg")
+				{
+					var byteArray:ByteArray=new ByteArray;
+					var stream:FileStream=new FileStream;
+					stream.open(file,FileMode.READ);
+					stream.readBytes(byteArray);
+					stream.close();
+					
+					this.source=byteArray;
+				}
+				else
+				{
+					Alert.show("Unsupported file extension ："+file.extension);
+				}
+				
+			}
+			
+			/**Maximum is changed by two value the width/height of image and rect.
+			 * Loading of image is asynchronous,so we must protect the value of NumberStepper from wrong maximum when image has not been loaded yet.*/
+			private function srcNotLoadedHandler(value:int):int
+			{
+				if(ready)
+					return value;
+				else
+					return int.MAX_VALUE;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<containers:topControlBar>
+		<s:Group>
+			<s:layout>
+				<s:HorizontalLayout paddingLeft="16" paddingRight="16" gap="16" verticalAlign="middle"/>
+			</s:layout>
+			<s:Label text="{'frame size: '+frameWidth+' × '+frameHeight}"/>
+			<s:Label text="{'source size: '+sourceWidth+' × '+sourceHeight}"/>
+			<s:HSlider id="scaleSlider" minimum="0.01" maximum="4" stepSize="0.01" snapInterval="0.01" width="256" value="1"/>
+			<s:CheckBox id="borderCheckBox" label="clip border"/>
+		</s:Group>
+	</containers:topControlBar>
+	<containers:bottomControlBar>
+		<s:Group enabled.empty="false" enabled.editing="{locked ? false : true}">
+			<s:layout>
+				<s:HorizontalLayout paddingLeft="16" paddingRight="16" gap="16" verticalAlign="middle"/>
+			</s:layout>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="offset X:"/>
+				<s:NumericStepper value="@{offsetX}" width="60" color="0x000000" minimum="-300" maximum="300"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="offset Y:"/>
+				<s:NumericStepper value="@{offsetY}" width="60" color="0x000000" minimum="-300" maximum="300"/>
+			</s:HGroup>
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="head X:"/>		
+				<s:NumericStepper width="60" color="0x000000" value="@{clipRect.x}" minimum="0" maximum="{srcNotLoadedHandler(sourceWidth-clipRect.width)}"/>
+			</s:HGroup>
+			
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="head Y:"/>		
+				<s:NumericStepper width="60" color="0x000000" value="@{clipRect.y}" minimum="0" maximum="{srcNotLoadedHandler(sourceHeight-clipRect.height)}"/>
+			</s:HGroup>
+			
+			<s:HGroup verticalAlign="middle">
+				<s:Label text="{'multiple ( '+clipRect.aspectRatio+' ) :'}"/>		
+				<s:NumericStepper id="multipleStepper" width="60" color="0x000000" value="@{clipRect.multiple}" 
+								  minimum="1" maximum="{srcNotLoadedHandler(Math.min(Math.floor((sourceWidth-clipRect.x)/clipRect.widthRatio),Math.floor((sourceHeight-clipRect.y)/clipRect.heightRatio)))}"/>
+				<s:Label text="{clipRect.width+' × '+clipRect.height}" width="100"/>
+			</s:HGroup>
+		</s:Group>
+	</containers:bottomControlBar>
+	<s:Scroller width="100%" height="100%">
+		<s:Group scaleX="{scaleSlider.value}" scaleY="{scaleSlider.value}">
+			<components:PhotoFrame id="photeFrame" frameSource="{frameSource}" backgroundSource="{backgroundSource}" offsetX="@{offsetX}" offsetY="@{offsetY}" locked="{locked}" resize="photoframe_resizeHandler(event)">
+				<components:ImageClip id="clipper" source="{source}" clipRect="{clipRect}" showClipBorder="{borderCheckBox.selected}" locked="{locked}" 
+											   ready="imageclippercore_readyHandler(event)"/>
+			</components:PhotoFrame>
+			<s:Label horizontalCenter="0" verticalCenter="0" text="Drop image file here" color="0x000000" fontSize="20" fontWeight="bold" 
+					 visible="false" visible.empty="{locked ? false : true}"/>
+		</s:Group>
+	</s:Scroller>
+</containers:CtrlPanel>

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Metadata>
+		[Event(name="ready", type="mx.events.FlexEvent")]
+	</fx:Metadata>
+	<fx:Script>
+		<![CDATA[			
+			import mx.events.FlexEvent;
+			import mx.events.PropertyChangeEvent;
+			
+			import editorlib.graphics.RatioRect;
+			
+			private var ready:Boolean = false;
+
+			private var _source:Object;	
+			
+			/**The variable is assign to source of BitmapImage, so you can put anything BitmapImage supported into it.*/
+			[Bindable]
+			public function get source():Object
+			{
+				return _source;
+			}
+			public function set source(value:Object):void
+			{
+				_source = value;
+
+				if(value is ByteArray)
+				{
+					if(ByteArray(value).length == 0)
+					{
+						_source = null;
+					}
+				}
+				else
+				{
+					//
+				}
+				
+				if(_source == null)
+				{
+					_bitmapData = null
+					
+					var oldWidth:Number = _sourceWidth;
+					_sourceWidth = 0;
+					dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"sourceWidth",oldWidth,_sourceWidth));
+					
+					var oldHeight:Number = _sourceHeight;
+					_sourceHeight = 0;
+					dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"sourceHeight",oldHeight,_sourceHeight));
+				}
+				
+				ready = false;
+			}
+			
+			private var _sourceWidth:Number = 0;
+
+			[Bindable("propertyChange")]
+			public function get sourceWidth():Number
+			{
+				return _sourceWidth;
+			}
+			
+			private var _sourceHeight:Number = 0;
+			
+			[Bindable("propertyChange")]
+			public function get sourceHeight():Number
+			{
+				return _sourceHeight;
+			}
+
+			private var _bitmapData:BitmapData;
+
+			public function get bitmapData():BitmapData
+			{
+				return _bitmapData;
+			}
+
+			[Bindable]
+			public var clipRect:RatioRect = new RatioRect();
+			
+			[Bindable]
+			public var showClipBorder:Boolean = false;
+			
+			private var _clipXLimit:Number = 0;
+
+			[Bindable("propertyChange")]
+			public function get clipXLimit():Number
+			{
+				return _clipXLimit;
+			}			
+			
+			private var _clipYLimit:Number = 0;
+
+			[Bindable("propertyChange")]
+			public function get clipYLimit():Number
+			{
+				return _clipYLimit;
+			}
+			
+			private var _clipWidthLimit:Number = 0;
+
+			[Bindable("propertyChange")]
+			public function get clipWidthLimit():Number
+			{
+				return _clipWidthLimit;
+			}
+			
+			private var _clipHeightLimit:Number = 0;
+
+			[Bindable(event="propertyChange")]
+			public function get clipHeightLimit():Number
+			{
+				return _clipHeightLimit;
+			}
+			
+			[Bindable]
+			public var locked:Boolean = false;
+			
+			private var offsetX:int;
+			
+			private var offsetY:int;
+			
+			protected function mouseDownHandler(event:MouseEvent):void
+			{
+				if(ready == false || locked)
+					return;
+				var rectangle:Rectangle=new Rectangle(clipRect.x,clipRect.y,clipRect.width,clipRect.height);
+				if(rectangle.contains(event.localX,event.localY))
+				{
+					offsetX=event.localX-clipRect.x;
+					offsetY=event.localY-clipRect.y;
+					
+					_clipXLimit=sourceWidth-clipRect.width;
+					_clipYLimit=sourceHeight-clipRect.height;
+					
+					content.addEventListener(MouseEvent.MOUSE_MOVE,mouseMoveHandler);
+					
+					event.stopPropagation();
+				}
+			}
+			
+			protected function mouseUpHandler(event:MouseEvent):void
+			{
+				content.removeEventListener(MouseEvent.MOUSE_MOVE,mouseMoveHandler);
+			}
+			
+			protected function mouseMoveHandler(event:MouseEvent):void
+			{
+				var newX:int=event.localX-offsetX;
+				newX=newX<0?0:newX;
+				newX=newX>clipXLimit?clipXLimit:newX;
+				clipRect.x=newX;
+				
+				var newY:int=event.localY-offsetY;
+				newY=newY<0?0:newY;
+				newY=newY>clipYLimit?clipYLimit:newY;
+				clipRect.y=newY;
+			}
+			
+			protected function image_readyHandler(event:FlexEvent):void
+			{
+				_bitmapData = bitmapImage.bitmapData;
+				
+				var oldWidth:Number = _sourceWidth;
+				_sourceWidth = bitmapImage.sourceWidth;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"sourceWidth",oldWidth,_sourceWidth));
+				
+				var oldHeight:Number = _sourceHeight;
+				_sourceHeight = bitmapImage.sourceHeight;
+				dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"sourceHeight",oldHeight,_sourceHeight));
+				
+				ready = true;
+				dispatchEvent(event);
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Group id="content" mouseDown="mouseDownHandler(event)" mouseUp="mouseUpHandler(event)">
+		<s:BitmapImage id="bitmapImage" source="{source}" ready="image_readyHandler(event)"/>
+		<s:Path data="{'M 0 0 L 0 '+sourceHeight+' L '+sourceWidth+' '+sourceHeight+' L '+sourceWidth+' 0 L 0 0 '+
+				'M '+clipRect.x+' '+clipRect.y+' L '+(clipRect.x+clipRect.width)+' '+clipRect.y+' L '+(clipRect.x+clipRect.width)+' '+(clipRect.y+clipRect.height)+' L '+clipRect.x+' '+(clipRect.y+clipRect.height)+' L '+clipRect.x+' '+clipRect.y}">
+			<s:fill>
+				<s:SolidColor alpha="0.3"/>
+			</s:fill>
+		</s:Path>
+		<s:Rect x="{clipRect.x}" y="{clipRect.y}" width="{clipRect.width}" height="{clipRect.height}" visible="{showClipBorder}">
+			<s:stroke>
+				<s:SolidColorStroke weight="1"/>
+			</s:stroke>
+		</s:Rect>
+	</s:Group>
+</s:Group>
