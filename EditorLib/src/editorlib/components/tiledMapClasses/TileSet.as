@@ -104,7 +104,7 @@ package editorlib.components.tiledMapClasses
 			return _bitmapData;
 		}
 
-		private var tiledMapData:TiledMapData;
+		internal var tiledMapData:TiledMapData;
 		
 		private var xml:XML;
 		
@@ -167,8 +167,8 @@ package editorlib.components.tiledMapClasses
 			_sourceWidth = _bitmapData.width;
 			_sourceHeight = _bitmapData.height;
 			
-			_row = Math.round(_sourceWidth / _tileWidth);
-			_column = Math.round(_sourceHeight / _tileHeight);
+			_row = Math.floor(_sourceHeight / _tileHeight);
+			_column = Math.floor(_sourceWidth / _tileWidth);
 			
 			readTiles(xml.tile)
 			

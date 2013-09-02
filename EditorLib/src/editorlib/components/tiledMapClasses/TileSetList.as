@@ -11,6 +11,13 @@ package editorlib.components.tiledMapClasses
 	
 	public class TileSetList extends ArrayList
 	{
+		private var _tiles:Array;
+
+		public function get tiles():Array
+		{
+			return _tiles;
+		}
+
 		private var tiledMapData:TiledMapData;
 
 		public function TileSetList(tiledMapData:TiledMapData)
@@ -37,6 +44,8 @@ package editorlib.components.tiledMapClasses
 		
 		public function readXML(xmlList:XMLList):void
 		{
+			_tiles = [];
+			
 			var source:Array = [];
 			
 			for each(var tilesetXML:XML in xmlList)

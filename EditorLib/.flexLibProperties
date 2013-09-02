@@ -4,6 +4,10 @@
     <classEntry path="editorlib.containers.CtrlPanel"/>
     <classEntry path="editorlib.containers.ctrlPanelClasses.CtrlPanelSkin"/>
     <classEntry path="editorlib.components.tiledMapClasses.TileSetList"/>
+    <classEntry path="editorlib.components.TiledMap"/>
+    <classEntry path="editorlib.components.tiledMapClasses.ObjectRenderer"/>
+    <classEntry path="editorlib.components.tiledMapClasses.LayerList"/>
+    <classEntry path="editorlib.components.tiledMapClasses.TileRenderer"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

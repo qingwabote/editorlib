@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Script>
+		<![CDATA[
+			import editorlib.components.tiledMapClasses.TiledMapData;
+			
+			[Bindable]
+			public var tiledMapData:TiledMapData;
+			
+		]]>
+	</fx:Script>
+	<!---layers-->
+	<s:DataGroup dataProvider="{tiledMapData.layerList}" mouseEnabled="false">
+		<s:itemRenderer>
+			<fx:Component>
+				<s:ItemRenderer autoDrawBackground="false" mouseEnabled="false">
+					<fx:Script>
+						<![CDATA[
+							import editorlib.components.tiledMapClasses.TLayer;
+						]]>
+					</fx:Script>
+					<s:DataGroup dataProvider="{TLayer(data)}" itemRenderer="editorlib.components.tiledMapClasses.TileRenderer">
+						<s:layout>
+							<s:TileLayout requestedRowCount="{TLayer(data).height}" requestedColumnCount="{TLayer(data).width}" 
+										  rowHeight="{TLayer(data).tiledMapData.}"
+										  horizontalGap="0" verticalGap="0"/>
+						</s:layout>
+					</s:DataGroup>
+				</s:ItemRenderer>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:DataGroup>
+	<!---object groups-->
+	<s:DataGroup dataProvider="{tiledMapData.objectGroupList}" mouseEnabled="false">
+		<s:itemRenderer>
+			<fx:Component>
+				<s:ItemRenderer autoDrawBackground="false" mouseEnabled="false">
+					<fx:Script>
+						<![CDATA[
+							import editorlib.components.tiledMapClasses.TObjectGroup;
+						]]>
+					</fx:Script>
+					<s:DataGroup dataProvider="{TObjectGroup(data)}" itemRenderer="editorlib.components.tiledMapClasses.ObjectRenderer"/>
+				</s:ItemRenderer>
+			</fx:Component>
+		</s:itemRenderer>
+	</s:DataGroup>
+</s:Group>

@@ -1,7 +1,6 @@
 package editorlib.components.tiledMapClasses
 {
-	import mx.collections.IList;
-
+	[Bindable]
 	public class TObject
 	{
 		private var _GID:int;
@@ -12,7 +11,7 @@ package editorlib.components.tiledMapClasses
 		}
 
 		private var _x:Number;
-
+		
 		public function get x():Number
 		{
 			return _x;
@@ -38,7 +37,7 @@ package editorlib.components.tiledMapClasses
 		private var tiledMapData:TiledMapData;
 
 		private var _tile:Tile;
-		[Bindable]
+		
 		public function get tile():Tile
 		{
 			return _tile;
@@ -60,18 +59,7 @@ package editorlib.components.tiledMapClasses
 			x = xml.@x;
 			y = xml.@y;
 			
-			var target:Tile;
-			var tileSetList:IList = tiledMapData.tileSetList;
-			for(var i:int = 0; i < tileSetList.length; i++)
-			{
-				var tileSet:TileSet = tileSetList.getItemAt(i) as TileSet;
-				if(tileSet.firstGID + tileSet.length >= _GID)
-				{
-					target = tileSet.getItemAt(_GID - tileSet.firstGID) as Tile;
-					break;
-				}
-			}
-			tile = target;
+			tile = tiledMapData.tileSetList.tiles[_GID] as Tile;
 		}
 		
 		public function writeXML():XML
