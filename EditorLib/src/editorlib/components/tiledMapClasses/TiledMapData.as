@@ -11,17 +11,31 @@ package editorlib.components.tiledMapClasses
 	public class TiledMapData extends EventDispatcher
 	{
 		private var _tileWidth:Number;
-
+		[Bindable("propertyChange")]
 		public function get tileWidth():Number
 		{
 			return _tileWidth;
 		}
 
 		private var _tileHeight:Number;
-
+		[Bindable("propertyChange")]
 		public function get tileHeight():Number
 		{
 			return _tileHeight;
+		}
+
+		private var _width:int;
+		[Bindable("propertyChange")]
+		public function get width():int
+		{
+			return _width;
+		}
+
+		private var _height:int;
+		[Bindable("propertyChange")]
+		public function get height():int
+		{
+			return _height;
 		}
 
 		private var _tileSetList:TileSetList;
@@ -71,6 +85,10 @@ package editorlib.components.tiledMapClasses
 		public function readXML(xml:XML):void
 		{
 			this.xml = xml;
+			_tileWidth = xml.@tilewidth;
+			_tileHeight = xml.@tileheight;
+			_width = xml.@width;
+			_height = xml.@height;
 
 			_tileSetList.readXML(xml.tileset);
 			_tileSetList.addEventListener(Event.COMPLETE,completeHandler);

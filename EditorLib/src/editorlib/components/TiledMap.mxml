@@ -18,13 +18,28 @@
 				<s:ItemRenderer autoDrawBackground="false" mouseEnabled="false">
 					<fx:Script>
 						<![CDATA[
+							import editorlib.components.tiledMapClasses.EmptyTileRenderer;
+							import editorlib.components.tiledMapClasses.TileRenderer;
 							import editorlib.components.tiledMapClasses.TLayer;
+							
+							private var tileRandererFactory:IFactory = new ClassFactory(TileRenderer);
+							private var nullRandererFactory:IFactory = new ClassFactory(EmptyTileRenderer);
+							private function itemRendererFunction(item:Object):IFactory
+							{
+								var factory:IFactory;
+								if(item != null)
+									factory = tileRandererFactory;
+								else
+									factory = nullRandererFactory;
+								
+								return factory; 									
+							}
 						]]>
 					</fx:Script>
-					<s:DataGroup dataProvider="{TLayer(data)}" itemRenderer="editorlib.components.tiledMapClasses.TileRenderer">
+					<s:DataGroup dataProvider="{TLayer(data)}" itemRendererFunction="{itemRendererFunction}">
 						<s:layout>
-							<s:TileLayout requestedRowCount="{TLayer(data).height}" requestedColumnCount="{TLayer(data).width}" 
-										  rowHeight="{TLayer(data).tiledMapData.}"
+							<s:TileLayout requestedRowCount="{TLayer(data).height}" requestedColumnCount="{TLayer(data).width}"
+										  rowHeight="{TLayer(data).tiledMapData.tileHeight}" columnWidth="{TLayer(data).tiledMapData.tileWidth}"
 										  horizontalGap="0" verticalGap="0"/>
 						</s:layout>
 					</s:DataGroup>

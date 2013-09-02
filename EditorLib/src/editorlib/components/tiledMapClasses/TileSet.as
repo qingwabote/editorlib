@@ -34,27 +34,17 @@ package editorlib.components.tiledMapClasses
 		}
 		
 		private var _tileWidth:Number;
-
+		[Bindable("propertyChange")]
 		public function get tileWidth():Number
 		{
 			return _tileWidth;
 		}
 
-		public function set tileWidth(value:Number):void
-		{
-			_tileWidth = value;
-		}
-
 		private var _tileHeight:Number;
-
+		[Bindable("propertyChange")]
 		public function get tileHeight():Number
 		{
 			return _tileHeight;
-		}
-
-		public function set tileHeight(value:Number):void
-		{
-			_tileHeight = value;
 		}
 
 		private var _imageSource:String;
@@ -121,21 +111,20 @@ package editorlib.components.tiledMapClasses
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE,completeHandler);
 			loader.loadBytes(tiledMapData.resourceProvider.getResource(_imageSource) as ByteArray);
 		}
-		
-		internal function setFirstGID(GID:int):void
-		{
-			_firstGID = GID;
-		}
-				
+						
 		public function readXML(xml:XML):void
 		{			
 			this.xml =xml;
 			
-			setFirstGID(xml.@firstgid);
+			_firstGID = xml.@firstgid;
+			_tileWidth = xml.@tilewidth;
+			_tileHeight = xml.@tileheight;
+			
 			name = xml.@name;
-			tileWidth = xml.@tilewidth;
-			tileHeight = xml.@tileheight;
 			imageSource = xml.image.@source;
+						
+			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"tileWidth",null,_tileWidth));
+			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"tileHeight",null,_tileHeight));
 		}
 		
 		public function writeXML():XML
@@ -157,6 +146,19 @@ package editorlib.components.tiledMapClasses
 			this.source = sourceInput;
 		}
 		
+		private function createTiles():void
+		{
+			var sourceInput:Array = [];
+			var num:int = _sourceWidth * _sourceHeight / (_tileWidth * _tileHeight);
+			for(var i:int = 0; i < num; i++)
+			{
+				var tile:Tile = new Tile(this);
+				tile.initialize(i);
+				source.push(tile);
+			}
+			this.source = sourceInput;
+		}
+		
 		private function completeHandler(event:Event):void
 		{
 			var info:LoaderInfo = event.target as LoaderInfo;
@@ -170,7 +172,11 @@ package editorlib.components.tiledMapClasses
 			_row = Math.floor(_sourceHeight / _tileHeight);
 			_column = Math.floor(_sourceWidth / _tileWidth);
 			
-			readTiles(xml.tile)
+			var tileList:XMLList = xml.tile;
+			if(tileList.length() > 0)
+				readTiles(tileList);
+			else
+				createTiles();
 			
 			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"bitmapData",null,_bitmapData));
 

@@ -31,42 +31,33 @@ package editorlib.components.tiledMapClasses
 			return _bitmapData;
 		}
 		
-		private var tileSet:TileSet;
-		
+		private var _tileSet:TileSet;
+		[Bindable("propertyChange")]
+		public function get tileSet():TileSet
+		{
+			return _tileSet;
+		}
+
 		private var tiledMapData:TiledMapData;
 		
 		public function Tile(tileSet:TileSet)
 		{
-			this.tileSet = tileSet;
+			_tileSet = tileSet;
 			tiledMapData = tileSet.tiledMapData;
 		}
 		
-		public function readXML(xml:XML):void
+		public function initialize(ID:int):void
 		{
-			for(var key:String in this)
-			{
-				delete this[key];
-			}
+			_ID = ID;
+			_globalID = _tileSet.firstGID + _ID;
 			
-			_ID = xml.@id;
+			var rowIndex:int = _ID < _tileSet.column ? 0 : Math.floor(_ID / _tileSet.column);
+			var colIndex:int = _ID < _tileSet.column ? _ID : ID % _tileSet.column;
 			
-			var propertyList:XMLList = xml.properties.property;
-			for each(var property:XML in propertyList)
-			{
-				var name:String = property.@name;
-				var value:String = property.@value;
-				this[name] = value;
-			}
-			
-			_globalID = tileSet.firstGID + _ID;
-			
-			var rowIndex:int = _ID < tileSet.column ? 0 : Math.floor(_ID / tileSet.column);
-			var colIndex:int = _ID < tileSet.column ? _ID : ID % tileSet.column;
-					
-			var dest:Point = new Point(colIndex * tileSet.tileWidth, rowIndex * tileSet.tileHeight);
-			var rect:Rectangle = new Rectangle(dest.x, dest.y, tileSet.tileWidth, tileSet.tileHeight);
+			var dest:Point = new Point(colIndex * _tileSet.tileWidth, rowIndex * _tileSet.tileHeight);
+			var rect:Rectangle = new Rectangle(dest.x, dest.y, _tileSet.tileWidth, _tileSet.tileHeight);
 			var bitmapData:BitmapData = new BitmapData(rect.width, rect.height);
-			bitmapData.copyPixels(tileSet.bitmapData, rect, new Point, null, null, false);
+			bitmapData.copyPixels(_tileSet.bitmapData, rect, new Point, null, null, false);
 			
 			_bitmapData = bitmapData;
 			
@@ -75,6 +66,25 @@ package editorlib.components.tiledMapClasses
 			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"ID",null,_ID));
 			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"globalID",null,_globalID));
 			dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"bitmapData",null,_bitmapData));
+		}
+		
+		public function readXML(xml:XML):void
+		{
+			for(var key:String in this)
+			{
+				delete this[key];
+			}
+						
+			var propertyList:XMLList = xml.properties.property;
+			for each(var property:XML in propertyList)
+			{
+				var name:String = property.@name;
+				var value:String = property.@value;
+				this[name] = value;
+			}
+			_ID = xml.@id;
+
+			initialize(_ID);
 		}
 		
 		public function writeXML():XML

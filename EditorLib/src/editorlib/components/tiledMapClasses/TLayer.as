@@ -78,7 +78,7 @@ package editorlib.components.tiledMapClasses
 			name = xml.@name;
 			width = xml.@width;
 			height = xml.@height;
-			
+						
 			var data:String = xml.data[0];
 			var decoder:Base64Decoder = new Base64Decoder;
 			decoder.decode(data);
