@@ -10,4 +10,5 @@
 	</s:Rect>
 	<s:BitmapImage source="{Tile(data).bitmapData}"/>
 	<!--<s:Label text="{Tile(data).globalID}" horizontalCenter="0" verticalCenter="0" backgroundColor="0xFFFFFF"/>-->
+	<!--<s:Label text="{Tile(data).name}" horizontalCenter="0" verticalCenter="0" backgroundColor="0xFFFFFF"/>-->
 </s:ItemRenderer>

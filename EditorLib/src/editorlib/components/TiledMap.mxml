@@ -8,7 +8,6 @@
 			
 			[Bindable]
 			public var tiledMapData:TiledMapData;
-			
 		]]>
 	</fx:Script>
 	<!---layers-->
@@ -55,9 +54,15 @@
 					<fx:Script>
 						<![CDATA[
 							import editorlib.components.tiledMapClasses.TObjectGroup;
+							
+							private function getFactory(cls:Class):IFactory
+							{
+								var factory:IFactory = new ClassFactory(cls);
+								return factory;
+							}
 						]]>
 					</fx:Script>
-					<s:DataGroup dataProvider="{TObjectGroup(data)}" itemRenderer="editorlib.components.tiledMapClasses.ObjectRenderer"/>
+					<s:DataGroup dataProvider="{TObjectGroup(data)}" itemRenderer="{getFactory(TObjectGroup(data).renderer)}"/>
 				</s:ItemRenderer>
 			</fx:Component>
 		</s:itemRenderer>

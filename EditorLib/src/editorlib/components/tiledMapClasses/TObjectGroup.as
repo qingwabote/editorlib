@@ -1,10 +1,13 @@
 package editorlib.components.tiledMapClasses
 {
 	import mx.collections.ArrayList;
-	
+		
 	public class TObjectGroup extends ArrayList
 	{
 		public var name:String;
+		
+		[Bindable]
+		public var renderer:Class = ObjectRenderer;
 		
 		private var tiledMapData:TiledMapData;
 
