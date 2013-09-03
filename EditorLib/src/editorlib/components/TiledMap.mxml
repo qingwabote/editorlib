@@ -4,10 +4,58 @@
 		 xmlns:mx="library://ns.adobe.com/flex/mx">
 	<fx:Script>
 		<![CDATA[
+			import mx.events.PropertyChangeEvent;
+			
 			import editorlib.components.tiledMapClasses.TiledMapData;
 			
-			[Bindable]
-			public var tiledMapData:TiledMapData;
+			private var _resource:Object;
+
+			public function get resource():Object
+			{
+				return _resource;
+			}
+
+			public function set resource(value:Object):void
+			{
+				_resource = value;
+			}
+
+			private var tmxInvalidated:Boolean = false;
+			private var _tmx:String;
+
+			public function get tmx():String
+			{
+				return _tmx;
+			}
+
+			public function set tmx(value:String):void
+			{
+				_tmx = value;
+				tmxInvalidated = true;
+				invalidateProperties();
+			}
+
+			private var _tiledMapData:TiledMapData;
+			[Bindable("propertyChange")]
+			public function get tiledMapData():TiledMapData
+			{
+				return _tiledMapData;
+			}			
+			
+			override protected function commitProperties():void
+			{
+				super.commitProperties();
+				if(tmxInvalidated)
+				{
+					_tiledMapData = new TiledMapData;
+					_tiledMapData.resource = resource;
+					_tiledMapData.xml = XML(tmx);
+					
+					dispatchEvent(PropertyChangeEvent.createUpdateEvent(this,"tiledMapData",null,_tiledMapData));
+					
+					tmxInvalidated = false;
+				}
+			}
 		]]>
 	</fx:Script>
 	<!---layers-->
@@ -18,8 +66,8 @@
 					<fx:Script>
 						<![CDATA[
 							import editorlib.components.tiledMapClasses.EmptyTileRenderer;
-							import editorlib.components.tiledMapClasses.TileRenderer;
 							import editorlib.components.tiledMapClasses.TLayer;
+							import editorlib.components.tiledMapClasses.TileRenderer;
 							
 							private var tileRandererFactory:IFactory = new ClassFactory(TileRenderer);
 							private var nullRandererFactory:IFactory = new ClassFactory(EmptyTileRenderer);
