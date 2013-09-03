@@ -7,7 +7,7 @@ package editorlib.components.tiledMapClasses
 	
 	import mx.collections.ArrayList;
 	import mx.collections.IList;
-	
+		
 	public class TiledMapData extends EventDispatcher
 	{
 		private var _tileWidth:Number;
@@ -60,22 +60,47 @@ package editorlib.components.tiledMapClasses
 		}
 
 		private var _resourceProvider:IResourceProvider;
+		private var _resource:Object;
+        /**resource is the directory which tmx and images in.</br>
+		 * or a IResourceProvider instance that is available to provide images.
+		 * @see IResourceProvider*/
+		public function get resource():Object
+		{
+			return _resource;
+		}
+
+		public function set resource(value:Object):void
+		{
+			_resource = value;
+			
+			if(_resource is IResourceProvider)
+				_resourceProvider = _resource as IResourceProvider;
+			else if(_resource is File)
+				_resourceProvider = new FileResourceProvider(resource as File);
+		}
+		
+		private var _xml:XML;
+
+		public function get xml():XML
+		{
+			return _xml;
+		}
+
+		public function set xml(value:XML):void
+		{
+			_xml = value;
+			
+			readXML(_xml);
+		}
 
 		public function get resourceProvider():IResourceProvider
 		{
 			return _resourceProvider;
 		}
-
-		private var xml:XML;
 		
-		public function TiledMapData(resource:Object)
+		public function TiledMapData()
 		{
 			super(this);
-						
-			if(resource is IResourceProvider)
-				_resourceProvider = resource as IResourceProvider;
-			else if(resource is File)
-				_resourceProvider = new FileResourceProvider(resource as File);
 			
 			_tileSetList = new TileSetList(this);
 			_layerList = new LayerList(this);
@@ -84,7 +109,6 @@ package editorlib.components.tiledMapClasses
 		
 		public function readXML(xml:XML):void
 		{
-			this.xml = xml;
 			_tileWidth = xml.@tilewidth;
 			_tileHeight = xml.@tileheight;
 			_width = xml.@width;

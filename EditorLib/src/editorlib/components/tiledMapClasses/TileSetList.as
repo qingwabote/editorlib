@@ -40,6 +40,9 @@ package editorlib.components.tiledMapClasses
 				tileSet.addEventListener(Event.COMPLETE,oneCompleteHandler);
 				tileSet.load();
 			}
+			
+			if(loadingNum == 0)
+				dispatchEvent(new Event(Event.COMPLETE));
 		}
 		
 		public function readXML(xmlList:XMLList):void
